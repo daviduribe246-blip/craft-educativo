@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import io
 
 st.set_page_config(page_title="CRAFT Educativo V3",page_icon="🏭",layout="wide")
@@ -69,23 +68,28 @@ def layout_franjas(L,W,areas):
         centros.append((L/2,y+h/2)); dims.append((L,h)); y+=h
     return centros,dims,y
 
-def grafico(L,W,areas,asig,centros,dims,titulo):
-    fig,ax=plt.subplots(figsize=(9,4.6))
-    # slot s contiene el departamento cuyo asig[d]=s
+def dibujo_layout(L,W,asig,centros,dims,titulo):
+    """Dibuja el layout como SVG/HTML para evitar bloqueos de Matplotlib en Streamlit Cloud."""
     dep_en_slot={slot:d for d,slot in enumerate(asig)}
+    vw,vh=800,400
+    sx=vw/L; sy=vh/W
+    partes=[f'<div style="font-weight:600;text-align:center;margin-bottom:6px">{titulo}</div>',
+            f'<svg viewBox="0 0 {vw} {vh}" width="100%" style="border:1px solid #999;background:white">']
     for s,(x,y) in enumerate(centros):
         w,h=dims[s]
+        x0=(x-w/2)*sx; y0=(y-h/2)*sy
+        ww=w*sx; hh=h*sy
         d=dep_en_slot.get(s)
-        rect=plt.Rectangle((x-w/2,y-h/2),w,h,fill=False,linewidth=1.5)
-        ax.add_patch(rect)
-        if d is not None:
-            ax.text(x,y,f"D{d+1}",ha="center",va="center",fontweight="bold")
-    ax.set_xlim(0,L); ax.set_ylim(W,0); ax.set_aspect("equal")
-    ax.set_title(titulo); ax.set_xlabel("m"); ax.set_ylabel("m")
-    return fig
+        etiqueta=f"D{d+1}" if d is not None else ""
+        partes.append(f'<rect x="{x0:.2f}" y="{y0:.2f}" width="{ww:.2f}" height="{hh:.2f}" '
+                      f'fill="none" stroke="black" stroke-width="2"/>')
+        partes.append(f'<text x="{x*sx:.2f}" y="{y*sy:.2f}" text-anchor="middle" '
+                      f'dominant-baseline="middle" font-size="24" font-weight="700">{etiqueta}</text>')
+    partes.append('</svg>')
+    return "".join(partes)
 
-st.title("🏭 CRAFT Educativo — V3")
-st.caption("Implementación didáctica rápida basada en intercambio de centroides.")
+st.title("🏭 CRAFT Educativo — V3.1")
+st.caption("Implementación didáctica basada en intercambio de centroides. Versión 3.1.")
 
 with st.sidebar:
     st.header("Configuración")
@@ -123,7 +127,7 @@ inicial=list(range(n))
 z0=costo(inicial,centros,F,C,metodo)
 st.header("4. Layout inicial")
 a,b=st.columns([1.3,1])
-with a: st.pyplot(grafico(L,W,areas,inicial,centros,dims,"Layout inicial"))
+with a: st.markdown(dibujo_layout(L,W,inicial,centros,dims,"Layout inicial"), unsafe_allow_html=True)
 with b:
     st.metric("Costo inicial",f"{z0:,.2f}")
     st.dataframe(pd.DataFrame([{"Departamento":deps[i],"X":centros[i][0],"Y":centros[i][1]} for i in range(n)]),
@@ -149,8 +153,8 @@ if "res" in st.session_state:
     c3.metric("Ahorro",f"{ahorro:,.2f}")
     c4.metric("Reducción",f"{pct:.2f}%")
     x,y=st.columns(2)
-    with x: st.pyplot(grafico(L,W,areas,inicial,centros,dims,"Antes"))
-    with y: st.pyplot(grafico(L,W,areas,asig,centros,dims,"Después (asignación de centroides)"))
+    with x: st.markdown(dibujo_layout(L,W,inicial,centros,dims,"Antes"), unsafe_allow_html=True)
+    with y: st.markdown(dibujo_layout(L,W,asig,centros,dims,"Después (asignación de centroides)"), unsafe_allow_html=True)
     st.subheader("Iteraciones")
     st.dataframe(hist,hide_index=True,use_container_width=True)
     with st.expander("Auditoría de pares evaluados"):
