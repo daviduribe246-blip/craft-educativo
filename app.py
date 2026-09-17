@@ -154,7 +154,7 @@ F=Fdf.to_numpy(dtype=float).copy(); np.fill_diagonal(F,0)
 st.header("3. Costos unitarios")
 C0=np.ones((n,n)); np.fill_diagonal(C0,0)
 Cdf=st.data_editor(pd.DataFrame(C0,index=deps,columns=deps),use_container_width=True)
-C=Cdf.to_numpy(float); np.fill_diagonal(C,0)
+C=Cdf.to_numpy(dtype=float).copy(); np.fill_diagonal(C,0)
 
 signature=(rows,cols,tuple(q),tuple(deps))
 if st.session_state.get("signature")!=signature:
