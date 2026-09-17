@@ -149,7 +149,7 @@ st.header("2. Matriz From-To")
 F0=np.zeros((n,n))
 if n==4: F0=np.array([[0,2,7,4],[3,0,5,5],[6,7,0,33],[8,2,3,0]],float)
 Fdf=st.data_editor(pd.DataFrame(F0,index=deps,columns=deps),use_container_width=True)
-F=Fdf.to_numpy(float); np.fill_diagonal(F,0)
+F=Fdf.to_numpy(dtype=float).copy(); np.fill_diagonal(F,0)
 
 st.header("3. Costos unitarios")
 C0=np.ones((n,n)); np.fill_diagonal(C0,0)
